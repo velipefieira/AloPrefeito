@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Cargo {
+  id                Int      @id @default(autoincrement())
+  nome              String   @unique
+  credenciais       Credencial[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@map("cargo")
+}
+
+model Categoria {
+  id                Int      @id @default(autoincrement())
+  nome              String   @unique
+  relatos           Relato[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@map("categoria")
+}
+
+model Status {
+  id                Int      @id @default(autoincrement())
+  nome              String   @unique
+  relatos           Relato[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@map("status")
+}
+
+model Credencial {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  senha             String
+  usuario           Usuario? @relation
+  cargoId           Int
+  cargo             Cargo    @relation(fields: [cargoId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@map("credencial")
+}
+
+model Usuario {
+  id                Int      @id @default(autoincrement())
+  nome              String
+  cpf               String   @unique
+  cep               String
+  data_nascimento   DateTime
+  feedbacks         Feedback[]
+  comentarios       Comentario[]
+  relatos           Relato[]
+  credencialId      Int?     @unique
+  credencial        Credencial? @relation(fields: [credencialId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@map("usuario")
+}
+
+
+
+model Relato {
+  id          Int      @id @default(autoincrement())
+  descricao   String
+  latitude    Decimal?
+  longitude   Decimal?
+  imagem      Bytes?
+  comentarios     Comentario[]
+  data_inicio DateTime
+  data_final  DateTime?
+  usuarioId   Int?
+  usuario     Usuario?  @relation(fields: [usuarioId], references: [id])
+  categoriaId Int
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  statusId    Int
+  status      Status   @relation(fields: [statusId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("relato")
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  avaliacao Int
+  descricao String
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("feedback")
+}
+
+model Comentario {
+  id          Int      @id @default(autoincrement())
+  descricao   String
+  data        DateTime
+  usuarioId   Int
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  relatoId    Int?
+  relato      Relato?   @relation(fields: [relatoId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("comentario")
+}
