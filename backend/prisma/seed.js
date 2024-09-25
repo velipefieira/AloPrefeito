@@ -12,7 +12,8 @@ async function main() {
         { nome: "Infraestrutura" },
         { nome: "Segurança" },
         { nome: "Ambiente" },
-        { nome: "Serviços Públicos" }
+        { nome: "Serviços Públicos" },
+        { nome: "Outros" }
       ]
     });
   }

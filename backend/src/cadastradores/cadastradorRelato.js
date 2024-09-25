@@ -1,11 +1,11 @@
 import prisma from '../config/db.js';
 
-async function cadastrarRelato(params) {
+async function cadastrarRelato(params, imagem) {
     try {
         let descricao = params.descricao;
         let usuarioId = params.usuarioId;
-        let categoriaId = params.categoriaId;
-        let statusId = params.statusId;
+        let categoriaId = parseInt(params.categoriaId);
+        let statusId = 1
         let data_inicio = new Date()
 
         const relato = await prisma.relato.create({
@@ -15,6 +15,7 @@ async function cadastrarRelato(params) {
                 categoriaId,
                 statusId,
                 data_inicio,
+                imagem
             },
         });
 
