@@ -9,42 +9,39 @@ export default function Home() {
   const [relatos, setRelatos] = useState<Relato[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  
+
   useEffect(() => {
     const fetchRelatos = async () => {
       try {
         const response = await api.get("/relato")
-        
+
         setRelatos(response.data)
         setLoading(false)
       } catch (error) {
         console.log
-        (`Erro ao buscar relatos ` + error)
+          (`Erro ao buscar relatos ` + error)
 
       }
     }
     fetchRelatos()
   }, [])
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setIsRefreshing(true);
-    const fetchRelatos = async () => {
-      try {
-        const response = await api.get("/relato")
-        console.log('veio isso do back' + response.data);
-        
-        setRelatos(response.data)
-      } catch (error) {
-        setError(`Erro ao buscar relatos` + error)
-      }
-      setLoading(false)
-    }
-      fetchRelatos()
+
+    try {
+      const response = await api.get("/relato");
+      setRelatos(response.data);
+    } catch (error) {
+      setError(`Erro ao buscar relatos: ${error}`);
+    } finally {
       setIsRefreshing(false);
+    }
   };
+
 
   return (
     <>
@@ -58,7 +55,7 @@ export default function Home() {
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }>
-          {relatos ? (
+          {relatos.length > 0 && isRefreshing == false ? (
             <>
               {relatos.map((rel, index) => (
                 <View key={index}>
@@ -68,11 +65,18 @@ export default function Home() {
               ))}
             </>
           ) : (
-            <View>
-              <Text> Não foram encontrados relatos. </Text>
-            </View>
+            <>
+              {isRefreshing ? (
+                <>
+                </>
+              ) : (
+                <View>
+                  <Text> Não foram encontrados relatos. </Text>
+                </View >
+              )}
+            </>
           )}
-        </ScrollView>
+        </ScrollView >
       )}
     </>
   );

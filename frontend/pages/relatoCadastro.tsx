@@ -8,6 +8,7 @@ const RelatoCadastro = () => {
     const [descricao, setDescricao] = useState('');
     const [opcaoSelecionada, setOpcaoSelecionada] = useState<string>('0');
     const [imagem, setImagem] = useState<string | null>(null);
+    const [enviando, setEnviando] = useState<boolean>(false);
 
     const [categorias, setCategorias] = useState([
         { value: '1', label: "Infraestrutura" },
@@ -44,9 +45,10 @@ const RelatoCadastro = () => {
     // };
 
     const enviarFormulario = async () => {
-        if (descricao === "" || opcaoSelecionada === '0' || imagem === null) {
-            alert("Você precisa fornecer uma categoria, uma breve descrição do relato e uma imagem");
-        } else {
+        if (descricao === "" || opcaoSelecionada === '0') {
+            alert("Você precisa fornecer uma categoria e uma breve descrição do relato");
+        } else if ( enviando !== true ){
+            setEnviando(true)
             const formData = new FormData();
             formData.append('descricao', descricao);
             formData.append('categoriaId', opcaoSelecionada);
@@ -59,7 +61,6 @@ const RelatoCadastro = () => {
                 } as any);
             }
             
-    
             try {
                 let response = await api.post('/relato/cadastrar', formData, {
                     headers: {
@@ -67,10 +68,12 @@ const RelatoCadastro = () => {
                     },
                 });
                 console.log(response.data);
+                alert("Relato enviado com sucesso!")
                 limparFormulario();                
             } catch (error:any) {
                 console.error('Erro ao enviar o formulário:', error.response ? error.response.data : error.message);
             }
+            setEnviando(false)
         }
     };
     
@@ -91,6 +94,7 @@ const RelatoCadastro = () => {
                 style={styles.input}
                 value={descricao}
                 onChangeText={setDescricao}
+                placeholder='Descreva o relato'
             />
 
             {/* Aqui ficará o campo para enviar a geolocalização! */}
@@ -155,7 +159,7 @@ const pickerSelectStyles = {
         fontSize: 16,
         paddingVertical: 12,
         paddingHorizontal: 10,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: 'black',
         borderRadius: 4,
         color: 'black',
@@ -166,7 +170,7 @@ const pickerSelectStyles = {
         fontSize: 16,
         paddingHorizontal: 10,
         paddingVertical: 8,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: 'black',
         borderRadius: 8,
         color: 'black',
