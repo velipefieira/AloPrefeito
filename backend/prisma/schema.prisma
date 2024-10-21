@@ -79,6 +79,7 @@ model Relato {
   comentarios     Comentario[]
   data_inicio DateTime
   data_final  DateTime?
+  endereco    String
   usuarioId   Int?
   usuario     Usuario?  @relation(fields: [usuarioId], references: [id])
   categoriaId Int

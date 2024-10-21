@@ -1,23 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import * as ImagePicker from 'expo-image-picker';
 import api from '@/services/api';
+import Mapa from '@/components/mapa';
 
-const RelatoCadastro = () => {
+const RelatoCadastro = ({ userDetails }: any) => {
     const [descricao, setDescricao] = useState('');
     const [opcaoSelecionada, setOpcaoSelecionada] = useState<string>('0');
     const [imagem, setImagem] = useState<string | null>(null);
     const [enviando, setEnviando] = useState<boolean>(false);
+    const [localizacao, setLocalizacao] = useState<{
+        latitude: number;
+        longitude: number;
+    } | null>(null);
+    const [endereco, setEndereco] = useState<string>('')
 
-    const [categorias, setCategorias] = useState([
-        { value: '1', label: "Infraestrutura" },
-        { value: '2', label: "Segurança" },
-        { value: '3', label: "Ambiente" },
-        { value: '4', label: "Serviços Públicos" },
-        { value: '5', label: "Outros" }])
+    const categorias = [
+        { value: '1', label: 'Infraestrutura' },
+        { value: '2', label: 'Segurança' },
+        { value: '3', label: 'Ambiente' },
+        { value: '4', label: 'Serviços Públicos' },
+        { value: '5', label: 'Outros' },
+    ];
 
-    // Função para abrir a galeria e selecionar a imagem
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -26,33 +32,37 @@ const RelatoCadastro = () => {
             quality: 1,
         });
 
-
         if (!result.canceled) {
             setImagem(result.assets[0].uri);
         }
     };
 
-    const limparFormulario = async () => {
-        setDescricao('')
-        setOpcaoSelecionada('0')
-        setImagem(null)
-    }
+    const limparFormulario = () => {
+        setDescricao('');
+        setOpcaoSelecionada('0');
+        setImagem(null);
+    };
 
-    // const getBlobFromUri = async (uri: string | URL | Request) => {
-    //     const response = await fetch(uri);
-    //     const blob = await response.blob();
-    //     return blob;
-    // };
+    const handleDescricaoChange = (text: string) => {
+        if (text.length <= 191) {
+            setDescricao(text);
+        }
+    };
 
     const enviarFormulario = async () => {
-        if (descricao === "" || opcaoSelecionada === '0') {
-            alert("Você precisa fornecer uma categoria e uma breve descrição do relato");
-        } else if ( enviando !== true ){
-            setEnviando(true)
+        if (descricao === '' || opcaoSelecionada === '0') {
+            alert('Você precisa fornecer uma categoria e uma breve descrição do relato');
+            return;
+        }
+
+        if (!enviando) {
+            setEnviando(true);
             const formData = new FormData();
             formData.append('descricao', descricao);
             formData.append('categoriaId', opcaoSelecionada);
-    
+            formData.append('usuarioId', userDetails.id);
+            formData.append('endereco', endereco)
+
             if (imagem) {
                 formData.append('imagem', {
                     uri: imagem,
@@ -60,98 +70,135 @@ const RelatoCadastro = () => {
                     name: 'imagem.jpg',
                 } as any);
             }
-            
+
+            formData.append('latitude', localizacao ? localizacao.latitude.toString(): '0')
+            formData.append('longitude', localizacao ? localizacao.longitude.toString(): '0')
+
             try {
-                let response = await api.post('/relato/cadastrar', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
+                const response = await api.post('/relato/cadastrar', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
                 });
                 console.log(response.data);
-                alert("Relato enviado com sucesso!")
-                limparFormulario();                
-            } catch (error:any) {
+                alert('Relato enviado com sucesso!');
+                limparFormulario();
+            } catch (error: any) {
                 console.error('Erro ao enviar o formulário:', error.response ? error.response.data : error.message);
+            } finally {
+                setEnviando(false);
             }
-            setEnviando(false)
         }
     };
-    
 
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
 
-            <Text style={styles.label}>Categoria do relato:</Text>
+            <Text style={styles.label}>Categoria do relato <Text style={styles.required}>*</Text></Text>
             <RNPickerSelect
                 onValueChange={(value) => setOpcaoSelecionada(value)}
                 items={categorias}
                 style={pickerSelectStyles}
-                placeholder={{ label: 'Selecione uma opção' }}
+                placeholder={{ label: 'Selecione uma opção', value: '0' }}
             />
 
-            <Text style={styles.label}>Descrição do relato:</Text>
+            <Text style={styles.label}>Descrição <Text style={styles.required}>*</Text></Text>
             <TextInput
                 style={styles.input}
                 value={descricao}
-                onChangeText={setDescricao}
-                placeholder='Descreva o relato'
+                onChangeText={handleDescricaoChange}
+                placeholder="Descreva o relato..."
+                numberOfLines={5}
             />
 
-            {/* Aqui ficará o campo para enviar a geolocalização! */}
+            <Text style={styles.label}>Forneça a localização do relato</Text>
+            <View style={styles.mapPlaceholder}>
+                <Mapa 
+                    localizacao={localizacao} setLocalizacao={setLocalizacao} 
+                    endereco={endereco} setEndereco={setEndereco}
+                />
+            </View>
 
             <Text style={styles.label}>Deseja anexar uma imagem?</Text>
-            <Button title="Anexar Imagem" onPress={pickImage} />
+            <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+                <Text style={styles.imageButtonText}>Anexar imagem</Text>
+            </TouchableOpacity>
+
             {imagem && (
                 <View style={styles.imageContainer}>
                     <Image source={{ uri: imagem }} style={styles.previewImage} />
                 </View>
             )}
 
-            <Text> </Text>
-
-            <Button title="Enviar" onPress={enviarFormulario} />
-        </View>
+            <TouchableOpacity style={styles.submitButton} onPress={enviarFormulario}>
+                <Text style={styles.submitButtonText}>Enviar</Text>
+            </TouchableOpacity>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
+        flexGrow: 1,
         padding: 20,
+        backgroundColor: '#fff',
     },
     label: {
-        fontSize: 16,
-        marginVertical: 10,
+        fontSize: 20,
+        marginBottom: 5,
+        fontWeight: '500',
+    },
+    required: {
+        color: 'red'
     },
     input: {
         borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
         padding: 10,
-        borderRadius: 15,
-        marginBottom: 20,
+        marginBottom: 15,
+        backgroundColor: '#f9f9f9',
+    },
+    mapPlaceholder: {
+        display: 'flex',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        borderRadius: 8,
+        marginBottom: 15,
     },
     imageButton: {
-        color: "#D2E4EE",
-        width: "50%"
-    },
-    imagePicker: {
-        backgroundColor: '#ccc',
-        padding: 10,
+        backgroundColor: '#f9f9f9',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 8,
         alignItems: 'center',
-        marginVertical: 10,
+        marginBottom: 15,
     },
-    imagePickerText: {
+    imageButtonText: {
         color: '#000',
+        fontSize: 16,
     },
     imageContainer: {
-        display: 'flex',
-        justifyContent: "center",
-        alignItems: "center"
+        alignItems: 'center',
+        marginBottom: 15,
     },
     previewImage: {
         width: 300,
         height: 200,
+        borderRadius: 8,
+        resizeMode: 'cover',
+
+    },
+    submitButton: {
         marginTop: 10,
-        resizeMode: 'contain',
-    }
+        backgroundColor: '#28A745',
+        paddingVertical: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
 });
 
 const pickerSelectStyles = {
@@ -159,23 +206,23 @@ const pickerSelectStyles = {
         fontSize: 16,
         paddingVertical: 12,
         paddingHorizontal: 10,
-        borderWidth: 2,
-        borderColor: 'black',
-        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
         color: 'black',
-        paddingRight: 30,
-        marginBottom: 20,
+        marginBottom: 15,
+        backgroundColor: '#f9f9f9',
     },
     inputAndroid: {
         fontSize: 16,
-        paddingHorizontal: 10,
         paddingVertical: 8,
-        borderWidth: 2,
-        borderColor: 'black',
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
         borderRadius: 8,
         color: 'black',
-        paddingRight: 30,
-        marginBottom: 20,
+        marginBottom: 15,
+        backgroundColor: '#f9f9f9',
     },
 };
 

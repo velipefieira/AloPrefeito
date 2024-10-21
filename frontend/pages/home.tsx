@@ -1,44 +1,49 @@
-import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View, Text, RefreshControl } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View, Text, RefreshControl, ActivityIndicator } from "react-native";
 import RelatoComponente from "../components/relato";
 import { Relato } from "@/types/relatoProps";
 import api from "@/services/api";
 import Navbar from "@/components/navbar";
+import { useFocusEffect } from "@react-navigation/native";
+import axios from "axios";
 
-export default function Home() {
+export default function Home({ userDetails }: any) {
   const [relatos, setRelatos] = useState<Relato[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-
-  useEffect(() => {
-    const fetchRelatos = async () => {
-      try {
-        const response = await api.get("/relato")
-
+  const fetchRelatos = async () => {
+    try {
+      if (userDetails !== null) {
+        if (userDetails.cargo == "Administrador") {
+          var response = await api.get("/relato")
+        } else {
+          response = await api.get(`/relato/usuario/${userDetails.id}`)
+        }
         setRelatos(response.data)
         setLoading(false)
-      } catch (error) {
-        console.log
-          (`Erro ao buscar relatos ` + error)
-
       }
+    } catch (error) {
+      console.log
+        (`Erro ao buscar relatos ` + error)
     }
+  }
+
+  useEffect( () => {
     fetchRelatos()
   }, [])
 
 
-  const onRefresh = async () => {
-    setIsRefreshing(true);
 
+  const onRefresh = async () => {
+    setLoading(true);
     try {
-      const response = await api.get("/relato");
-      setRelatos(response.data);
+      await fetchRelatos()
     } catch (error) {
       setError(`Erro ao buscar relatos: ${error}`);
     } finally {
-      setIsRefreshing(false);
+      setLoading(false);
     }
   };
 
@@ -47,9 +52,13 @@ export default function Home() {
     <>
       <Navbar />
       {loading === true ? (
-        <View>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          }>
+          <ActivityIndicator size="large" color="#0000ff" />
           <Text> Carregando ... </Text>
-        </View>
+        </ScrollView>
       ) : (
         <ScrollView style={style.container}
           refreshControl={
@@ -71,7 +80,7 @@ export default function Home() {
                 </>
               ) : (
                 <View>
-                  <Text> Não foram encontrados relatos. </Text>
+                  <Text> Você ainda não possui nenhum relato. </Text>
                 </View >
               )}
             </>

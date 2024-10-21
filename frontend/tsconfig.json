@@ -14,5 +14,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "pages/login.tsx", "services/useAsyncStorage.ts", "services/api.ts", "app/index.tsx", "components/mapa.tsx", "components/navbar.tsx", "components/relato.tsx"  ]
 }

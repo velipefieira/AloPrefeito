@@ -1,16 +1,16 @@
 import { Relato } from "@/types/relatoProps";
 import { View, StyleSheet, Text, Image } from "react-native";
 import { useEffect, useState } from "react";
+import relato from "@/services/relato";
 
 export default function RelatoComponente(props: Relato) {
-    const [image, setImage] = useState<string | null>(null);
-    
     const status = props.status.nome;
     const categoria = props.categoria.nome;
     const descricao = props.descricao;
     const data_inicial = new Date(props.data_inicio);
     const data_final = props.data_final;
     const imagem = props.imagem;
+    const endereco = props.endereco;
 
     return (
         <View style={style.relato}>
@@ -34,8 +34,18 @@ export default function RelatoComponente(props: Relato) {
                     </View>
                 )}
                 <Text> </Text>
-                <Text style={style.dataText}> 
-                    {data_inicial.getDate()}/{data_inicial.getMonth() + 1}/{data_inicial.getFullYear()} - 
+                {endereco && (
+                    <View style={style.enderecoContainer}>
+                        <View>
+                            <Image source={require('../assets/images/pin.png')} style={style.pinImage} />
+                        </View>
+                        <View>
+                            <Text style={style.enderecoText}>{endereco} </Text>
+                        </View>
+                    </View>
+                )}
+                <Text style={style.dataText}>
+                    {data_inicial.getDate()}/{data_inicial.getMonth() + 1}/{data_inicial.getFullYear()} -
                     {data_final ? (() => {
                         const dateObject = new Date(data_final);
                         return `${dateObject.getDate()}/${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
@@ -63,11 +73,25 @@ const style = StyleSheet.create({
         alignItems: "center"
     },
     previewImage: {
-        width: 350,
-        height: 200,
+        width: '100%',
+        height: 225,
         marginTop: 10,
         borderRadius: 20,
         resizeMode: 'contain',
+    },
+    pinImage: {
+        width: 50,
+        height: 50
+    },
+    enderecoContainer: {
+        display: 'flex',
+        width: '85%',
+        flexDirection: 'row',
+    },
+    enderecoText: {
+        fontSize: 16,
+        margin: 3,
+        fontWeight: 'bold'
     },
     categoriaText: {
         fontSize: 24,
@@ -79,7 +103,7 @@ const style = StyleSheet.create({
         marginLeft: 10
     },
     dataText: {
-        fontSize: 24,
+        fontSize: 20,
         marginLeft: 10,
         fontWeight: 'bold'
     },

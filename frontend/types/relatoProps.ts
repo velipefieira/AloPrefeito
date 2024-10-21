@@ -9,12 +9,13 @@ export interface RelatoProps {
 export interface Relato {
     id: number,
     descricao: string,
-    latitude?: number,
-    longitude?: number,
+    latitude?: string,
+    longitude?: string,
     data_inicio: Date,
     data_final?: Date,
     imagem: any,
     comentario?: Comentario[],
+    endereco: string,
     usuarioId?: number,
     categoria: Categoria,
     status: Status
