@@ -31,13 +31,13 @@
         <td> 2 </td>
         <td> 10/09 </td>
         <td> 04/10 </td>
-        <td> Não iniciada </td>
+        <td> Concluída </td>
     </tr>
      <tr align="center">
         <td> 3 </td>
         <td> 05/10 </td>
         <td> 25/10 </td>
-        <td> Não iniciada </td>
+        <td> Em Andamento </td>
     </tr>
      <tr align="center">
         <td> 4 </td>
