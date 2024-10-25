@@ -142,10 +142,6 @@ router.post('/relato/cadastrar', upload.single('imagem'), (req, res) => {
 
   const imagem = req.file ? req.file.buffer : null;
 
-  if (!imagem) {
-    return res.status(400).json({ error: 'Nenhuma imagem foi enviada.' });
-  }
-
   try {
     cadastradorRelato.cadastrarRelato(req.body, imagem);
     res.status(201).json("Relato cadastrado com sucesso");
@@ -161,8 +157,13 @@ router.post('/relato/cadastrar', upload.single('imagem'), (req, res) => {
 
 router.post('/usuario/cadastrar', async (req, res) => {
   try {
-    cadastradorUsuario.cadastrarUsuario(req.body)
-    res.status(201).json({ message: 'Usuário registrado com sucesso' });
+    let verificacao = await buscadorUsuario.verificarUsuario(req.body)
+    if (verificacao){
+      res.status(202).json({ message: 'CPF ou E-Mail já cadastrado'})
+    } else{
+      cadastradorUsuario.cadastrarUsuario(req.body)
+      res.status(201).json({ message: 'Usuário registrado com sucesso' });
+    }
   } catch (error) {
     console.error('Erro ao registrar usuário:', error);
     res.status(500).json({ message: 'Erro no servidor' });

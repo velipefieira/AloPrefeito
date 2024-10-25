@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import * as ImagePicker from 'expo-image-picker';
 import api from '@/services/api';
@@ -51,7 +51,7 @@ const RelatoCadastro = ({ userDetails }: any) => {
 
     const enviarFormulario = async () => {
         if (descricao === '' || opcaoSelecionada === '0') {
-            alert('Você precisa fornecer uma categoria e uma breve descrição do relato');
+            Alert.alert('Atenção!','Você precisa fornecer uma categoria e uma breve descrição do relato');
             return;
         }
 
@@ -79,7 +79,7 @@ const RelatoCadastro = ({ userDetails }: any) => {
                     headers: { 'Content-Type': 'multipart/form-data' },
                 });
                 console.log(response.data);
-                alert('Relato enviado com sucesso!');
+                Alert.alert('Confirmado!','Relato enviado com sucesso!');
                 limparFormulario();
             } catch (error: any) {
                 console.error('Erro ao enviar o formulário:', error.response ? error.response.data : error.message);

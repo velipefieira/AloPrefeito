@@ -21,4 +21,20 @@ async function buscarUsuariosPorId(id) {
     return usuarios
 }
 
-export default { buscarUsuarios, buscarUsuariosPorId }
+async function verificarUsuario(body) {
+    const usuario = await prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { cpf: body.cpf },
+          { credencial: { email: body.email } }
+        ]
+      },
+      include: {
+        credencial: true
+      }
+    });
+  
+    return !!usuario;
+  }
+
+export default { buscarUsuarios, buscarUsuariosPorId, verificarUsuario }

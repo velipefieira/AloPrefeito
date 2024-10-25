@@ -13,7 +13,7 @@ export default function Mapa({ localizacao, setLocalizacao, endereco, setEnderec
             if (status !== 'granted') {
                 Alert.alert('Permissão negada', 'Permita o acesso à localização para continuar.');
                 return;
-            }
+            } 
 
             const location = await Location.getCurrentPositionAsync({});
             setInitialRegion({
@@ -22,24 +22,35 @@ export default function Mapa({ localizacao, setLocalizacao, endereco, setEnderec
                 latitudeDelta: 0.001,
                 longitudeDelta: 0.001,
             });
-
             await fetchEndereco(location.coords.latitude, location.coords.longitude)
             setLocalizacao(location.coords)
+            // setInitialRegion({
+            //     latitude: -23.1791,
+            //     longitude: -45.8872,
+            //     latitudeDelta: 0.001,
+            //     longitudeDelta: 0.001,
+            // });
+
         })();
     }, []);
 
     const handleSelectLocation = async (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
         setLocalizacao({ latitude, longitude });
-        await fetchEndereco(latitude, longitude); // Busca o endereço
+        await fetchEndereco(latitude, longitude);
     };
 
     const fetchEndereco = async (latitude: number, longitude: number) => {
         try {
             const response = await axios.get(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+                {
+                    headers: {
+                      'User-Agent': 'AloPrefeito (github.com/velipefieira)',
+                      'Accept-Language': 'pt-BR'
+                    }
+                  }
             );
-
             const addressData = response.data.address;
 
             // Filtra as informações relevantes
@@ -53,8 +64,8 @@ export default function Mapa({ localizacao, setLocalizacao, endereco, setEnderec
             setEndereco(formattedAddress);
 
         } catch (error) {
-            console.error('Erro ao buscar endereço:', error);
-            Alert.alert('Erro', 'Não foi possível buscar o endereço.');
+            console.log(error);
+            Alert.alert('Erro', 'Não foi possível carregar o mapa, tente novamente mais tarde.');
         }
     };
 
@@ -96,7 +107,7 @@ const styles = StyleSheet.create({
     },
     map: {
         height: 300,
-        width: 'auto',
+        width: 300,
         padding: 2
     },
     loadingContainer: {

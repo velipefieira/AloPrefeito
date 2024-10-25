@@ -1,8 +1,9 @@
 import api from '@/services/api';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import RNPickerSelect from 'react-native-picker-select';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import Navbar from '@/components/navbar';
+import Usuario from '@/types/usuario';
 
 export default function UsuarioCadastro({ userDetails }: any) {
     const [nome, setNome] = useState('');
@@ -11,15 +12,17 @@ export default function UsuarioCadastro({ userDetails }: any) {
     const [cep, setCep] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
+    const [senha2, setSenha2] = useState('');
     const [cargoId, setCargo] = useState<number>(2);
     const [enviando, setEnviando] = useState(false);
+    const [usuarios, setUsuarios] = useState<Usuario[]>([])
 
     const cargos = [
         { value: 1, label: 'Administrador' },
         { value: 2, label: 'Cidadão' }
     ];
 
-    const mascararCPF = (valor:any) => {
+    const mascararCPF = (valor: any) => {
         return valor
             .replace(/\D/g, '')
             .slice(0, 11)
@@ -27,34 +30,38 @@ export default function UsuarioCadastro({ userDetails }: any) {
             .replace(/(\d{3})(\d)/, '$1.$2')
             .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     };
-    
-    const mascararData = (valor:any) => {
+
+    const mascararData = (valor: any) => {
         return valor
             .replace(/\D/g, '')
             .slice(0, 8)
             .replace(/(\d{2})(\d)/, '$1/$2')
             .replace(/(\d{2})(\d{1,4})$/, '$1/$2');
     };
-    
-    const mascararCEP = (valor:any) => {
+
+    const mascararCEP = (valor: any) => {
         return valor
             .replace(/\D/g, '')
             .slice(0, 8)
             .replace(/(\d{5})(\d{1,3})$/, '$1-$2');
     };
-    
-    
 
     const enviarFormulario = async () => {
         if (!nome || !cpf || !dataNascimento || !cep || !email || !senha) {
-            alert('Por favor, preencha todos os campos obrigatórios.');
+            Alert.alert('Atenção!','Por favor, preencha todos os campos obrigatórios.');
             return;
         }
 
         if (dataNascimento[2] !== "/" || dataNascimento[5] !== "/") {
-            alert("Por favor, insira a data de nascimento no formato dd/mm/aaaa")
+            Alert.alert('Atenção!',"Por favor, insira a data de nascimento no formato dd/mm/aaaa")
             return
         }
+
+        if (senha !== senha2) {
+            Alert.alert('Atenção!',"As senhas não coincidem")
+            return
+        }
+
         if (!enviando) {
             setEnviando(true);
 
@@ -72,11 +79,15 @@ export default function UsuarioCadastro({ userDetails }: any) {
             try {
                 const response = await api.post('/usuario/cadastrar', usuarioData);
                 console.log(response.data);
-                alert('Usuário cadastrado com sucesso!');
-                limparFormulario();
+                if (response.status === 201) {
+                    Alert.alert('Confirmado!','Usuário cadastrado com sucesso!');
+                    limparFormulario();
+                } else if ( response.status === 202) {
+                    Alert.alert('Atenção!',response.data.message);
+                    return
+                }
             } catch (error: any) {
-                console.error('Erro ao cadastrar usuário:', error.response ? error.response.data : error.message);
-                alert('Erro ao cadastrar usuário. Tente novamente.');
+                Alert.alert('Atenção!','Erro ao cadastrar usuário. Tente novamente.');
             } finally {
                 setEnviando(false);
             }
@@ -84,12 +95,9 @@ export default function UsuarioCadastro({ userDetails }: any) {
     };
 
     const formatarData = (data: string) => {
-        let dataDividida = data.split("/")
-        var dia = dataDividida[2]
-        var mes = dataDividida[1]
-        var ano = dataDividida[0]
-        return `${dia}/${mes}/${ano}`
-    }
+        const [dia, mes, ano] = data.split("/");
+        return `${ano}-${mes}-${dia}`;
+    };
 
     const limparFormulario = () => {
         setNome('');
@@ -98,6 +106,7 @@ export default function UsuarioCadastro({ userDetails }: any) {
         setCep('');
         setEmail('');
         setSenha('');
+        setSenha2('');
     };
 
     return (
@@ -153,6 +162,15 @@ export default function UsuarioCadastro({ userDetails }: any) {
                     value={senha}
                     onChangeText={setSenha}
                     placeholder="Digite sua senha"
+                    secureTextEntry
+                />
+
+                <Text style={styles.label}> Confirme a Senha <Text style={styles.required}>*</Text></Text>
+                <TextInput
+                    style={styles.input}
+                    value={senha2}
+                    onChangeText={setSenha2}
+                    placeholder="Digite sua senha novamente"
                     secureTextEntry
                 />
 
