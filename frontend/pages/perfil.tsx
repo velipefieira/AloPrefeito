@@ -1,10 +1,12 @@
 import Navbar from "@/components/navbar";
 import api from "@/services/api";
+import { Relato } from "@/types/relatoProps";
 import React, { useEffect, useState } from "react";
 import { Button, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function Perfil({ handleLogout, userDetails }: any) {
-    const [relatos, setRelatos] = useState<number>(0)
+    const [relatosPendentes, setRelatosPendentes] = useState<number>(0)
+    const [relatosResolvidos, setRelatosResolvidos] = useState<number>(0)
 
     const fetchRelatos = async () => {
         try {
@@ -15,7 +17,14 @@ export default function Perfil({ handleLogout, userDetails }: any) {
               response = await api.get(`/relato/usuario/${userDetails.id}`)
             }
             const relatos = response.data
-            setRelatos(relatos.length)          }
+            relatos.forEach((relato: Relato) => {
+                if(relato.status.nome == "Pendente"){
+                    setRelatosPendentes(relatosPendentes + 1)
+                } else{
+                    setRelatosResolvidos(relatosResolvidos + 1)
+                }
+            });
+        }
         } catch (error) {
           console.log
             (`Erro ao buscar relatos ` + error)
@@ -34,7 +43,7 @@ export default function Perfil({ handleLogout, userDetails }: any) {
 
                 <View>
                     <Text style={style.relatosText}> Relatos Pendentes: </Text>
-                    <Text style={style.relatosNumber}> {relatos} </Text>
+                    <Text style={style.relatosNumber}> {relatosPendentes} </Text>
                 </View>
 
                 <TouchableOpacity style={style.exitButton} onPress={handleLogout}>

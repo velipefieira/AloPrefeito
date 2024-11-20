@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View, Text, RefreshControl, ActivityIndicator } from "react-native";
 import RelatoComponente from "../components/relato";
 import { Relato } from "@/types/relatoProps";
@@ -6,6 +6,7 @@ import api from "@/services/api";
 import Navbar from "@/components/navbar";
 import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
+import React from "react";
 
 export default function Home({ userDetails }: any) {
   const [relatos, setRelatos] = useState<Relato[]>([]);
@@ -65,27 +66,27 @@ export default function Home({ userDetails }: any) {
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }>
           {relatos.length > 0 && isRefreshing == false ? (
-            <>
+            <View>
               {relatos.map((rel, index) => (
                 <View key={index}>
                   <Text>  </Text>
                   <RelatoComponente key={index} {...rel} />
                 </View>
               ))}
-            </>
+            </View>
           ) : (
-            <>
+            <View>
               {isRefreshing ? (
-                <>
-                </>
+                <View>
+                </View>
               ) : (
                 <View>
                   <Text> Você ainda não possui nenhum relato. </Text>
                 </View >
               )}
-            </>
+            </View>
           )}
-        </ScrollView >
+        </ScrollView>
       )}
     </>
   );

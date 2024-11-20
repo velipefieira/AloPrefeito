@@ -1,6 +1,9 @@
+import Usuario from "./usuario";
+
 export interface Comentario{
     id: number,
     descricao: string,
-    usuarioId: number,
+    data: Date,
+    usuario: Usuario,
     relatoId: number
 }

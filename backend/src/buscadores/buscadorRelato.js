@@ -6,7 +6,11 @@ async function buscarRelatos() {
             usuario: true,
             categoria: true,
             status: true,
-            comentarios: true,
+            comentarios: {
+                include: {
+                    usuario: true
+                }
+            }
         }
     });
     return relatos
@@ -21,7 +25,11 @@ async function buscarRelatosPorId(id) {
             usuario: true,
             categoria: true,
             status: true,
-            comentarios: true
+            comentarios: {
+                include: {
+                    usuario: true
+                }
+            }
         }
     });
     return relatos
@@ -35,7 +43,11 @@ async function buscarRelatosPorUsuario(usuarioId) {
         include: {
             categoria: true,
             status: true,
-            comentarios: true
+            comentarios: {
+                include: {
+                    usuario: true
+                }
+            }
         }
     });
     return relatos

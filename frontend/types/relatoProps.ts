@@ -14,7 +14,7 @@ export interface Relato {
     data_inicio: Date,
     data_final?: Date,
     imagem: any,
-    comentario?: Comentario[],
+    comentarios: Comentario[],
     endereco: string,
     usuarioId?: number,
     categoria: Categoria,

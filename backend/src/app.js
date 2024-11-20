@@ -7,8 +7,12 @@ import cors from 'cors';
 import multer from 'multer'
 import { Buffer } from 'buffer';
 import buscadorUsuario from './buscadores/buscadorUsuario.js';
+import buscadorComentarios from './buscadores/buscadorComentarios.js';
+import atualizadorUsuario from './atualizadores/atualizadorRelato.js';
 import auth from './middlewares/auth.js';
 import cadastradorUsuario from './cadastradores/cadastradorUsuario.js';
+import cadastradorComentario from './cadastradores/cadastradorComentario.js';
+import atualizadorRelato from './atualizadores/atualizadorRelato.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,8 +53,7 @@ router.post('/login', async (req, res) => {
       res.status(200).json({ token: 'E-mail ou senha incorretos' });
     }
   } catch (error) {
-    console.log('Erro ao efetuar login:', error);
-    res.status(500).json({ message: 'Erro no servidor' });
+    res.status(500).json('Erro no servidor', error);
   }
 });
 
@@ -69,13 +72,12 @@ router.get('/relato', async (req, res) => {
 
     res.json(relatosComImagens);
   } catch (error) {
-    console.error("Erro ao buscar relatos:", error);
-    res.status(500).json({ error: "Erro ao buscar relatos" });
+    res.status(500).json("Erro ao buscar relatos", error);
   }
 });
 
 router.get('/relato/:id', async (req, res) => {
-  let id = parseInt(req.params.id)
+  let id = parseInt(parseInt(req.params.id))
   let relatos = await buscadorRelato.buscarRelatosPorId(id)
 
   try {
@@ -90,8 +92,17 @@ router.get('/relato/:id', async (req, res) => {
 
     res.json(relatosComImagens);
   } catch (error) {
-    console.error("Erro ao buscar relatos:", error);
-    res.status(500).json({ error: "Erro ao buscar relatos" });
+    res.status(500).json("Erro ao buscar relatos", error);
+  }
+});
+
+router.get('/comentario/relato/:id', async (req, res) => {
+  let id = parseInt(req.params.id)
+  try {
+    let comentarios = await buscadorComentarios.buscarcomentarioPorRelato(id);
+    res.status(200).json(comentarios);
+  } catch (error) {
+    res.status(500).json("Erro ao buscar comentarios", error);
   }
 });
 
@@ -150,23 +161,39 @@ router.post('/relato/cadastrar', upload.single('imagem'), (req, res) => {
   }
 });
 
+router.post('/comentario/cadastrar/:id', async (req, res) => {
+  let id = parseInt(parseInt(req.params.id))
+  try {
+    cadastradorComentario.cadastrarComentario(id, req.body)
+    res.status(201).json({ message: 'Comentário registrado com sucesso' });
+  } catch (error) {
+    res.status(500).json("Erro ao registrar comentário", error);
+  }
+});
 
-
-//router.put('/relato/atualizar/:id', atualizadorRelato.updateUser);
 //router.delete('/relato/excluir/:id', excluidorRelato.deleteUser);
 
 router.post('/usuario/cadastrar', async (req, res) => {
   try {
     let verificacao = await buscadorUsuario.verificarUsuario(req.body)
-    if (verificacao){
-      res.status(202).json({ message: 'CPF ou E-Mail já cadastrado'})
-    } else{
+    if (verificacao) {
+      res.status(202).json({ message: 'CPF ou E-Mail já cadastrado' })
+    } else {
       cadastradorUsuario.cadastrarUsuario(req.body)
       res.status(201).json({ message: 'Usuário registrado com sucesso' });
     }
   } catch (error) {
-    console.error('Erro ao registrar usuário:', error);
-    res.status(500).json({ message: 'Erro no servidor' });
+    res.status(500).json('Erro ao registrar usuário:', error);
+  }
+});
+
+router.put('/relato/atualizar/:id', async (req, res) => {
+  let id = parseInt(parseInt(req.params.id))
+  try {
+    atualizadorRelato.atualizarRelato(id)
+    res.status(201).json("Relato atualizado com sucesso")
+  } catch (error) {
+    res.status(500).json("Erro ao atualizar usuário", error)
   }
 });
 /* 

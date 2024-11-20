@@ -1,21 +1,47 @@
 import { Relato } from "@/types/relatoProps";
-import { View, StyleSheet, Text, Image } from "react-native";
+import { View, StyleSheet, Text, Image, Alert, TouchableOpacity } from "react-native";
 import { useEffect, useState } from "react";
 import relato from "@/services/relato";
+import { Categoria } from "@/types/categoria";
+import api from "@/services/api";
+import Comentarios from "./comentarios";
 
 export default function RelatoComponente(props: Relato) {
-    const status = props.status.nome;
-    const categoria = props.categoria.nome;
-    const descricao = props.descricao;
-    const data_inicial = new Date(props.data_inicio);
-    const data_final = props.data_final;
-    const imagem = props.imagem;
-    const endereco = props.endereco;
+    const [status, setStatus] = useState<string>(props.status.nome);
+    const [categoria, setCategoria] = useState<Categoria>(props.categoria);
+    const [descricao, setDescricao] = useState<string>(props.descricao);
+    const [data_inicio, setDataInicio] = useState<Date>(new Date(props.data_inicio));
+    const [data_final, setDataFinal] = useState<Date | undefined>(props.data_final);
+    const [imagem] = useState(props.imagem);
+    const [endereco] = useState(props.endereco);
+    const [enviando, setEnviando] = useState<boolean>(false)
+    const [visivel, setVisivel] = useState<boolean>(false)
+
+    const atualizarRelato = async () => {
+        if (!enviando) {
+            setEnviando(true)
+            try {
+                const response = await api.put(`/relato/atualizar/${props.id}`);
+                console.log(response.data);
+                if (response.status === 201) {
+                    Alert.alert('Confirmado!', 'relato atualizado com sucesso!');
+                    setStatus("Resolvido")
+                    setDataFinal(new Date())
+                } else {
+                    Alert.alert("Ops", "Não foi possível marcar o relato como concluido, tente novamente mais tarde")
+                }
+            } catch (error: any) {
+                Alert.alert('Atenção!', 'Erro ao atualizar relato. Tente novamente.');
+            } finally {
+                setEnviando(false);
+            }
+        }
+    }
 
     return (
         <View style={style.relato}>
             <View style={style.relatoContainer}>
-                <Text style={style.categoriaText}> {categoria} </Text>
+                <Text style={style.categoriaText}> {categoria.nome} </Text>
                 <View>
                     {status === "Pendente" ? (
                         <Text style={style.pendente}> {status} </Text>
@@ -33,24 +59,54 @@ export default function RelatoComponente(props: Relato) {
                         <Image source={{ uri: imagem }} style={style.previewImage} />
                     </View>
                 )}
-                <Text> </Text>
-                {endereco && (
-                    <View style={style.enderecoContainer}>
-                        <View>
-                            <Image source={require('../assets/images/pin.png')} style={style.pinImage} />
-                        </View>
-                        <View>
-                            <Text style={style.enderecoText}>{endereco} </Text>
-                        </View>
+            </View>
+            {endereco && (
+                <View style={style.enderecoContainer}>
+                    <View>
+                        <Image source={require('../assets/images/pin.png')} style={style.pinImage} />
                     </View>
-                )}
-                <Text style={style.dataText}>
-                    {data_inicial.getDate()}/{data_inicial.getMonth() + 1}/{data_inicial.getFullYear()} -
-                    {data_final ? (() => {
-                        const dateObject = new Date(data_final);
-                        return `${dateObject.getDate()}/${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
-                    })() : ""}
-                </Text>
+                    <View>
+                        <Text style={style.enderecoText}>{endereco} </Text>
+                    </View>
+                </View>
+            )}
+            <View>
+                <View style={style.descricaoContainer}>
+                    <View style={style.comentariosDataContainer}>
+                        <TouchableOpacity onPress={() => { setVisivel(!visivel) }}>
+                            <Text style={style.comentarioText}>
+                                Ver comentários
+                            </Text>
+                        </TouchableOpacity>
+                        {visivel && (
+                            <View>
+                                <Comentarios
+                                    visivel={visivel}
+                                    setVisivel={setVisivel}
+                                    comentarios={props.comentarios}
+                                    relatoId={props.id}
+                                    status={status}
+                                />
+                            </View>
+                        )}
+                        <Text style={style.dataText}>
+                            {data_inicio.getDate()}/{data_inicio.getMonth() + 1}/{data_inicio.getFullYear()} -
+                            {data_final ? (() => {
+                                const dateObject = new Date(data_final);
+                                return `${dateObject.getDate()}/${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
+                            })() : ""}
+                        </Text>
+                    </View>
+                    {status == "Pendente" && (
+                        <View style={style.buttonContainer}>
+                            <TouchableOpacity style={style.button} onPress={atualizarRelato}>
+                                <Text style={style.buttonText}>
+                                    Marcar como Resolvido
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
             </View>
         </View>
     );
@@ -63,70 +119,116 @@ const style = StyleSheet.create({
         justifyContent: "center",
         backgroundColor: "#D2E4EE",
         width: "95%",
-        borderRadius: 20,
-        padding: 5,
-        margin: 10
-    },
-    imageContainer: {
-        display: 'flex',
-        justifyContent: "center",
-        alignItems: "center"
-    },
-    previewImage: {
-        width: '100%',
-        height: 225,
-        marginTop: 10,
-        borderRadius: 20,
-        resizeMode: 'contain',
-    },
-    pinImage: {
-        width: 50,
-        height: 50
-    },
-    enderecoContainer: {
-        display: 'flex',
-        width: '85%',
-        flexDirection: 'row',
-    },
-    enderecoText: {
-        fontSize: 16,
-        margin: 3,
-        fontWeight: 'bold'
-    },
-    categoriaText: {
-        fontSize: 24,
-        fontWeight: "bold"
-    },
-    descricaoText: {
-        fontSize: 28,
-        width: "90%",
-        marginLeft: 10
-    },
-    dataText: {
-        fontSize: 20,
-        marginLeft: 10,
-        fontWeight: 'bold'
+        borderRadius: 12,
+        padding: 15,
+        margin: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     relatoContainer: {
         display: "flex",
         flexDirection: "row",
-        justifyContent: "space-around",
+        justifyContent: "space-between",
         alignItems: "center",
-        fontSize: 30,
-        padding: 10
+        marginBottom: 10,
+    },
+    categoriaText: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#004B87",
     },
     pendente: {
         backgroundColor: "#FFA500",
-        borderRadius: 20,
-        fontSize: 24,
-        padding: 10,
-        fontWeight: "bold"
+        borderRadius: 15,
+        fontSize: 20,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        color: "#FFF",
+        fontWeight: "bold",
+        textAlign: "center",
     },
     resolvido: {
         backgroundColor: "#28A745",
-        borderRadius: 20,
-        fontSize: 24,
-        padding: 10,
-        fontWeight: "bold"
-    }
+        borderRadius: 15,
+        fontSize: 20,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        color: "#FFF",
+        fontWeight: "bold",
+        textAlign: "center",
+    },
+    descricaoText: {
+        fontSize: 20,
+        color: "#333",
+        marginVertical: 5,
+    },
+    imageContainer: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        marginVertical: 10,
+    },
+    previewImage: {
+        width: "100%",
+        height: 200,
+        borderRadius: 10,
+        resizeMode: "cover",
+    },
+    enderecoContainer: {
+        display: "flex",
+        width: '90%',
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 10,
+    },
+    pinImage: {
+        width: 40,
+        height: 40,
+        marginRight: 5,
+    },
+    enderecoText: {
+        fontSize: 14,
+        fontWeight: "bold",
+    },
+    descricaoContainer: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 15,
+    },
+    comentariosDataContainer: {
+        display: "flex",
+        flexDirection: "column",
+    },
+    comentarioText: {
+        color: "#002E5D",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    dataText: {
+        fontSize: 14,
+        color: "#666",
+        fontWeight: "bold",
+        marginTop: 5,
+    },
+    buttonContainer: {
+        marginTop: 10,
+        alignItems: "flex-end",
+    },
+    button: {
+        backgroundColor: "#28A745",
+        borderRadius: 12,
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+    },
+    buttonText: {
+        color: "#FFF",
+        fontSize: 14,
+        fontWeight: "bold",
+        textAlign: "center",
+    },
 });
