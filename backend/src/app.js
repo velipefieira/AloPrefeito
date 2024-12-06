@@ -7,12 +7,14 @@ import cors from 'cors';
 import multer from 'multer'
 import { Buffer } from 'buffer';
 import buscadorUsuario from './buscadores/buscadorUsuario.js';
+import buscadorFeedback from './buscadores/buscadorFeedback.js';
 import buscadorComentarios from './buscadores/buscadorComentarios.js';
 import atualizadorUsuario from './atualizadores/atualizadorRelato.js';
 import auth from './middlewares/auth.js';
 import cadastradorUsuario from './cadastradores/cadastradorUsuario.js';
 import cadastradorComentario from './cadastradores/cadastradorComentario.js';
 import atualizadorRelato from './atualizadores/atualizadorRelato.js';
+import cadastradorFeedback from './cadastradores/cadastradorFeedback.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -132,6 +134,25 @@ router.get('/relato/usuario/:id', async (req, res) => {
   }
 })
 
+router.get('/feedback/usuario/:id', async (req, res) => {
+  let id = parseInt(req.params.id)
+  try {
+    let feedbacks = await buscadorFeedback.buscarFeedbacksPorUsuario(id);
+    res.status(200).json(feedbacks);
+  } catch (error) {
+    res.status(500).json("Erro ao buscar feedbacks", error);
+  }
+});
+
+router.get('/feedback', async (req, res) => {
+  try {
+    let feedback = await buscadorFeedback.buscarFeedbacks()
+    res.json(feedback)
+  } catch (error) {
+    res.status(500).json("Erro ao buscar feedbacks", error);
+  }
+})
+
 /* 
 router.get('/feedback', userController.getAllUsers);
 */
@@ -171,6 +192,15 @@ router.post('/comentario/cadastrar/:id', async (req, res) => {
   }
 });
 
+router.post('/feedback/cadastrar/:id', async (req, res) => {
+  let id = parseInt(parseInt(req.params.id))
+  try {
+    cadastradorFeedback.cadastrarFeedback(id, req.body)
+    res.status(201).json({ message: 'Feedback registrado com sucesso' });
+  } catch (error) {
+    res.status(500).json("Erro ao registrar feedback", error);
+  }
+});
 //router.delete('/relato/excluir/:id', excluidorRelato.deleteUser);
 
 router.post('/usuario/cadastrar', async (req, res) => {

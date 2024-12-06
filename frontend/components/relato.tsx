@@ -5,23 +5,48 @@ import relato from "@/services/relato";
 import { Categoria } from "@/types/categoria";
 import api from "@/services/api";
 import Comentarios from "./comentarios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from "jwt-decode";
 
-export default function RelatoComponente(props: Relato) {
-    const [status, setStatus] = useState<string>(props.status.nome);
-    const [categoria, setCategoria] = useState<Categoria>(props.categoria);
-    const [descricao, setDescricao] = useState<string>(props.descricao);
-    const [data_inicio, setDataInicio] = useState<Date>(new Date(props.data_inicio));
-    const [data_final, setDataFinal] = useState<Date | undefined>(props.data_final);
-    const [imagem] = useState(props.imagem);
-    const [endereco] = useState(props.endereco);
+interface relatoComponente{
+    relato: Relato,
+    userDetails: any
+}
+
+export default function RelatoComponente({relato, userDetails}:relatoComponente) {
+    const [status, setStatus] = useState<string>(relato.status.nome);
+    const [categoria, setCategoria] = useState<Categoria>(relato.categoria);
+    const [descricao, setDescricao] = useState<string>(relato.descricao);
+    const [data_inicio, setDataInicio] = useState<Date>(new Date(relato.data_inicio));
+    const [data_final, setDataFinal] = useState<Date | undefined>(relato.data_final);
+    const [imagem] = useState(relato.imagem);
+    const [endereco] = useState(relato.endereco);
     const [enviando, setEnviando] = useState<boolean>(false)
     const [visivel, setVisivel] = useState<boolean>(false)
+    const [decoded, setDecoded] = useState(null)
+
+    const confirmarAtualizacao = () => {
+        Alert.alert(
+            "Confirmação",
+            "Tem certeza de que deseja marcar este relato como resolvido?",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel",
+                },
+                {
+                    text: "Confirmar",
+                    onPress: atualizarRelato,
+                },
+            ]
+        );
+    };
 
     const atualizarRelato = async () => {
         if (!enviando) {
             setEnviando(true)
             try {
-                const response = await api.put(`/relato/atualizar/${props.id}`);
+                const response = await api.put(`/relato/atualizar/${relato.id}`);
                 console.log(response.data);
                 if (response.status === 201) {
                     Alert.alert('Confirmado!', 'relato atualizado com sucesso!');
@@ -83,23 +108,22 @@ export default function RelatoComponente(props: Relato) {
                                 <Comentarios
                                     visivel={visivel}
                                     setVisivel={setVisivel}
-                                    comentarios={props.comentarios}
-                                    relatoId={props.id}
+                                    comentarios={relato.comentarios}
+                                    relatoId={relato.id}
                                     status={status}
                                 />
                             </View>
                         )}
                         <Text style={style.dataText}>
-                            {data_inicio.getDate()}/{data_inicio.getMonth() + 1}/{data_inicio.getFullYear()} -
-                            {data_final ? (() => {
+                            {data_inicio.getDate()}/{data_inicio.getMonth() + 1}/{data_inicio.getFullYear()} - {data_final ? (() => {
                                 const dateObject = new Date(data_final);
-                                return `${dateObject.getDate()}/${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
+                                return`${dateObject.getDate()}/${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
                             })() : ""}
                         </Text>
                     </View>
-                    {status == "Pendente" && (
+                    {status == "Pendente" && userDetails.cargo == "Administrador" &&(
                         <View style={style.buttonContainer}>
-                            <TouchableOpacity style={style.button} onPress={atualizarRelato}>
+                            <TouchableOpacity style={style.button} onPress={confirmarAtualizacao}>
                                 <Text style={style.buttonText}>
                                     Marcar como Resolvido
                                 </Text>
@@ -227,7 +251,7 @@ const style = StyleSheet.create({
     },
     buttonText: {
         color: "#FFF",
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: "bold",
         textAlign: "center",
     },

@@ -155,9 +155,8 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     closeButton: {
-        position: "absolute",
-        top: 10,
-        right: 10,
+        alignSelf: "flex-end",
+        padding: 10,
     },
     closeText: {
         fontSize: 18,

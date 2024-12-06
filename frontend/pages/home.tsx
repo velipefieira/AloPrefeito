@@ -1,58 +1,72 @@
-import { useCallback, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View, Text, RefreshControl, ActivityIndicator } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View, Text, RefreshControl, ActivityIndicator, TouchableOpacity } from "react-native";
 import RelatoComponente from "../components/relato";
 import { Relato } from "@/types/relatoProps";
 import api from "@/services/api";
 import Navbar from "@/components/navbar";
-import { useFocusEffect } from "@react-navigation/native";
-import axios from "axios";
-import React from "react";
+import FiltroStatus from "@/components/filtroStatus";
+import FiltroCategoria from "@/components/filtroCategoria";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 export default function Home({ userDetails }: any) {
   const [relatos, setRelatos] = useState<Relato[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [filtroVisivel, setFiltroVisivel] = useState(false);
+  const [filtroCategoriaVisivel, setFiltroCategoriaVisivel] = useState(false);
+  const [statusSelecionados, setStatusSelecionados] = useState<string[]>(['Resolvido', 'Pendente']);
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<string[]>(["Infraestrutura", "Segurança", "Ambiente", "Serviços Públicos"]);
+  const [relatosFiltrados, setRelatosFiltrados] = useState<Relato[]>([]);
 
   const fetchRelatos = async () => {
     try {
       if (userDetails !== null) {
-        if (userDetails.cargo == "Administrador") {
-          var response = await api.get("/relato")
-        } else {
-          response = await api.get(`/relato/usuario/${userDetails.id}`)
-        }
-        setRelatos(response.data)
-        setLoading(false)
+        const response = userDetails.cargo === "Administrador"
+          ? await api.get("/relato")
+          : await api.get(`/relato/usuario/${userDetails.id}`);
+
+        setRelatos(response.data);
+        setRelatosFiltrados(response.data);
+        setStatusSelecionados(['Resolvido', 'Pendente'])
+        setCategoriasSelecionadas(["Infraestrutura", "Segurança", "Ambiente", "Serviços Públicos", "Outros"])
+        setLoading(false);
       }
     } catch (error) {
-      console.log
-        (`Erro ao buscar relatos ` + error)
+      console.log(`Erro ao buscar relatos: ${error}`);
     }
-  }
-
-  useEffect( () => {
-    fetchRelatos()
-  }, [])
-
-
+  };
 
   const onRefresh = async () => {
     setLoading(true);
     try {
-      await fetchRelatos()
+      await fetchRelatos();
     } catch (error) {
-      setError(`Erro ao buscar relatos: ${error}`);
+      console.log(`Erro ao buscar relatos: ${error}`);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchRelatos();
+  }, []);
+
+  useEffect(() => {
+    const filtrarRelatos = () => {
+      const filtrados = relatos.filter((relato) =>
+        statusSelecionados.includes(relato.status.nome) &&
+        (categoriasSelecionadas.length === 0 || categoriasSelecionadas.includes(relato.categoria.nome))
+      );
+      setRelatosFiltrados(filtrados);
+    };
+
+    filtrarRelatos();
+  }, [statusSelecionados, categoriasSelecionadas, relatos]); // Dependência de status, categoria e relatos
 
   return (
     <>
       <Navbar />
-      {loading === true ? (
+      {loading ? (
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
@@ -65,25 +79,45 @@ export default function Home({ userDetails }: any) {
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }>
-          {relatos.length > 0 && isRefreshing == false ? (
+          <View style={style.filterContainer}>
+            <TouchableOpacity onPress={() => setFiltroVisivel(true)} style={style.filterButton}>
+              <Text style={style.filterText}> Status <MaterialCommunityIcons name="arrow-down-drop-circle-outline" color={"black"} size={24} /> </Text>
+            </TouchableOpacity>
+            <FiltroStatus
+              visivel={filtroVisivel}
+              setVisivel={setFiltroVisivel}
+              statusSelecionados={statusSelecionados}
+              setStatusSelecionados={setStatusSelecionados}
+              relatos={relatos}
+              setRelatosFiltrados={setRelatosFiltrados}
+            />
+            <TouchableOpacity onPress={() => setFiltroCategoriaVisivel(true)} style={style.filterButton}>
+              <Text style={style.filterText}> Categoria <MaterialCommunityIcons name="arrow-down-drop-circle-outline" color={"black"} size={24} /> </Text>
+            </TouchableOpacity>
+            <FiltroCategoria
+              visivel={filtroCategoriaVisivel}
+              setVisivel={setFiltroCategoriaVisivel}
+              categoriasSelecionadas={categoriasSelecionadas}
+              setCategoriasSelecionadas={setCategoriasSelecionadas}
+              relatos={relatos}
+              setRelatosFiltrados={setRelatosFiltrados}
+            />
+          </View>
+          {relatosFiltrados.length > 0 ? (
             <View>
-              {relatos.map((rel, index) => (
+              {relatosFiltrados.map((rel, index) => (
                 <View key={index}>
-                  <Text>  </Text>
-                  <RelatoComponente key={index} {...rel} />
+                  {statusSelecionados.includes(rel.status.nome) && categoriasSelecionadas.includes(rel.categoria.nome) &&(
+                    <View key={index}>
+                      <RelatoComponente relato={rel} userDetails={userDetails} />
+                    </View>
+                  )}
                 </View>
               ))}
             </View>
           ) : (
             <View>
-              {isRefreshing ? (
-                <View>
-                </View>
-              ) : (
-                <View>
-                  <Text> Você ainda não possui nenhum relato. </Text>
-                </View >
-              )}
+              <Text> Você ainda não possui nenhum relato. </Text>
             </View>
           )}
         </ScrollView>
@@ -92,27 +126,26 @@ export default function Home({ userDetails }: any) {
   );
 }
 
-
 const style = StyleSheet.create({
   container: {
     backgroundColor: '#F4F4F4',
     display: 'flex'
   },
-  relato: {
+  filterContainer: {
     display: 'flex',
-    margin: 16,
-    padding: 20
+    justifyContent: 'space-around',
+    flexDirection: "row"
   },
-  title: {
-    margin: 16,
-    paddingVertical: 8,
-    borderWidth: 4,
-    borderColor: '#20232a',
-    borderRadius: 6,
-    backgroundColor: '#61dafb',
-    color: '#20232a',
-    textAlign: 'center',
-    fontSize: 30,
-    fontWeight: 'bold'
+  filterButton: {
+    backgroundColor: "#D2E4EE",
+    padding: 10,
+    width: '45%',
+    borderRadius: 10,
+    justifyContent: 'center'
+  },
+  filterText: {
+    fontWeight: "bold",
+    fontSize: 24,
+    textAlign: "center"
   }
-})
+});
