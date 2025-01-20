@@ -1,8 +1,8 @@
 ## Aplicativo para Reporte de Problemas Urbanos - Alô Prefeito -
 
-<h3> Status do projeto: Em andamento ⏳ </h3>
+<h3> Status do projeto: Concluído ✔️ </h3>
 
-<br>
+<h4> Projeto desenvolvido com o objetivo de simplificar o processo de reporte de problemas urbanos, permitindo o usuário relatar um ocorrido de forma rápida e detalhada, com fotos e localização do ocorrido, além de fornecer um acompanhamento do processo de resolução do problema. </h4>
 
 <h2>  Protótipo no Figma </h2>
 
@@ -37,19 +37,19 @@
         <td> 3 </td>
         <td> 05/10 </td>
         <td> 25/10 </td>
-        <td> Em Andamento </td>
+        <td> Concluída </td>
     </tr>
      <tr align="center">
         <td> 4 </td>
         <td> 15/10 </td>
         <td> 18/11 </td>
-        <td> Não iniciada </td>
+        <td> Concluída </td>
     </tr>
        <tr align="center">
         <td> 5 </td>
         <td> 19/11 </td>
         <td> 06/12 </td>
-        <td> Não iniciada </td>
+        <td> Concluída </td>
     </tr>
 </table>
 
